@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -8,18 +9,20 @@ from googleapiclient.discovery import build
 
 SCOPES = ["https://www.googleapis.com/auth/tasks"]
 
-CREDENTIALS_FILE = "credentials.json"
-TOKEN_FILE = "token.json"
+BASE_DIR = Path(__file__).resolve().parent.parent
+CREDENTIALS_FILE = BASE_DIR / "credentials.json"
+TOKEN_FILE =  BASE_DIR / "token.json"
 
 def get_credentials():
     creds = None
 
-    if os.path.exists(TOKEN_FILE):
+    if TOKEN_FILE.exists():
         creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
 
     #if token expired
     if creds and creds.expired and creds.refresh_token:
         creds.refresh(Request())
+        TOKEN_FILE.write_text(creds.to_json()) #keeping refreshed token
     
     #no creds then run OAuth again
     if not creds or not creds.valid:
@@ -28,24 +31,13 @@ def get_credentials():
         creds = flow.run_local_server(port=0)
 
         #same token
-        with open(TOKEN_FILE, "w") as token:
-            token.write(creds.to_json())
+        TOKEN_FILE.write_text(creds.to_json())
 
     return creds
 
-def main():
-    print("hi")
+def get_service(creds):
     creds = get_credentials()
-
     service = build("tasks", "v1", credentials=creds)
-
-    #the thingy before the execute is our actual type of request end point thingy
-    test_result = service.tasklists().list().execute()
-    items = test_result.get("items", [])
     
-    for item in items:
-        print(f"{item['title']} : ({item['id']})")
+    return service
 
-
-if __name__ == "__main__":
-    main()
