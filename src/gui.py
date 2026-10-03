@@ -6,7 +6,7 @@ add / delete / complete / refresh."""
 import sys
 import threading
 
-from PySide6.QtCore import QEvent, QObject, QTimer, Qt, Signal
+from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QApplication, QComboBox, QFrame, QHBoxLayout, QLineEdit, QListWidget,
@@ -182,16 +182,7 @@ class Popup(QWidget):
     # ---- close on Esc / focus loss (but not when a dropdown or menu steals focus)
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Escape:
-            self.close()
-
-    def changeEvent(self, e):
-        if e.type() == QEvent.ActivationChange and not self.isActiveWindow():
-            QTimer.singleShot(150, self.maybe_close)
-
-    def maybe_close(self):
-        if not self.isActiveWindow() and QApplication.activePopupWidget() is None:
-            self.close()
-
+            QApplication.quit()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
